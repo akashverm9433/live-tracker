@@ -5,26 +5,29 @@
 
 <meta charset="UTF-8">
 
-<title>Live Tracking</title>
+<title>Live Journey Tracking</title>
 
 <link rel="stylesheet" href="style.css">
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 </head>
 
 <body>
 
+<div id="info">
+    <div id="distance">Distance : --</div>
+    <div id="eta">ETA : --</div>
+</div>
+
 <div id="map"></div>
 
 <script src="firebase-config.js"></script>
-
 <script src="app.js"></script>
 
 <script
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA4ee9PAuyV4pJv2qI0n_gUlGYHlA8sSMw&callback=initMap"
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA4ee9PAuyV4pJv2qI0n_gUlGYHlA8sSMw&libraries=geometry&callback=initMap"
 async
 defer>
 </script>
