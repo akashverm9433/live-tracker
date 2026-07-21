@@ -119,14 +119,14 @@ function drawRoute(start, end) {
     directionsService.route({
 
         origin: start,
-
         destination: end,
-
         travelMode: google.maps.TravelMode.DRIVING
 
     }, (result, status) => {
 
-        if (status === "OK") {
+        console.log("Directions Status:", status);
+
+        if (status === google.maps.DirectionsStatus.OK) {
 
             directionsRenderer.setDirections(result);
 
@@ -137,6 +137,11 @@ function drawRoute(start, end) {
 
             document.getElementById("eta").innerHTML =
                 "ETA : " + leg.duration.text;
+
+        } else {
+
+            console.error(result);
+            alert("Directions Error : " + status);
 
         }
 
