@@ -116,36 +116,40 @@ function createMarkers(start, end, current) {
 
 function drawRoute(start, end) {
 
-    directionsService.route({
+    console.log("Start:", start);
+    console.log("End:", end);
 
-        origin: start,
-        destination: end,
-        travelMode: google.maps.TravelMode.DRIVING
+    directionsService.route(
+        {
+            origin: start,
+            destination: end,
+            travelMode: google.maps.TravelMode.DRIVING
+        },
+        (result, status) => {
 
-    }, (result, status) => {
+            console.log("Directions Status:", status);
+            console.log(result);
 
-        console.log("Directions Status:", status);
+            if (status === "OK") {
 
-        if (status === google.maps.DirectionsStatus.OK) {
+                directionsRenderer.setDirections(result);
 
-            directionsRenderer.setDirections(result);
+                const leg = result.routes[0].legs[0];
 
-            const leg = result.routes[0].legs[0];
+                document.getElementById("distance").innerHTML =
+                    "Distance : " + leg.distance.text;
 
-            document.getElementById("distance").innerHTML =
-                "Distance : " + leg.distance.text;
+                document.getElementById("eta").innerHTML =
+                    "ETA : " + leg.duration.text;
 
-            document.getElementById("eta").innerHTML =
-                "ETA : " + leg.duration.text;
+            } else {
 
-        } else {
+                alert("Directions Error : " + status);
 
-            console.error(result);
-            alert("Directions Error : " + status);
+            }
 
         }
-
-    });
+    );
 
 }
 
