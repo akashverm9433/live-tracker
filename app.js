@@ -7,10 +7,10 @@ let startMarker;
 let endMarker;
 let currentMarker;
 
-let directionsService;
-let directionsRenderer;
+let routeLine;        // Straight line: Start -> Destination
+let travelledLine;    // Green line: Travelled path
 
-let routeDrawn = false;
+let travelledPath = [];
 
 function initMap() {
 
@@ -18,19 +18,6 @@ function initMap() {
         zoom: 15,
         center: { lat: 20, lng: 78 }
     });
-
-    directionsService = new google.maps.DirectionsService();
-
-    directionsRenderer = new google.maps.DirectionsRenderer({
-        suppressMarkers: true,
-        preserveViewport: true,
-        polylineOptions: {
-            strokeColor: "#4285F4",
-            strokeWeight: 6
-        }
-    });
-
-    directionsRenderer.setMap(map);
 
     db.collection("journeys")
         .doc(journeyId)
@@ -41,36 +28,44 @@ function initMap() {
             const data = doc.data();
 
             const start = {
-                lat: data.startLat,
-                lng: data.startLng
+                lat: Number(data.startLat),
+                lng: Number(data.startLng)
             };
 
             const end = {
-                lat: data.endLat,
-                lng: data.endLng
+                lat: Number(data.endLat),
+                lng: Number(data.endLng)
             };
 
             const current = {
-                lat: data.currentLat,
-                lng: data.currentLng
+                lat: Number(data.currentLat),
+                lng: Number(data.currentLng)
             };
 
             createMarkers(start, end, current);
 
-            // Draw route only once
-            if (!routeDrawn) {
+            // Draw the route only once
+            if (!routeLine) {
 
-                drawRoute(start, end);
+                drawStraightRoute(start, end);
 
                 fitBounds(start, end);
 
-                routeDrawn = true;
             }
 
-            // Move only the current marker
+            // Move current marker
             currentMarker.setPosition(current);
 
-            // Optional: keep map centered on current location
+            // Add current location to travelled path
+            travelledPath.push(current);
+
+            // Draw/update travelled path
+            updateTravelledPath();
+
+            // Update distance information
+            updateDistance(start, end, current);
+
+            // Keep current location in view
             map.panTo(current);
 
         });
@@ -114,42 +109,75 @@ function createMarkers(start, end, current) {
 
 }
 
-function drawRoute(start, end) {
+function drawStraightRoute(start, end) {
 
-    console.log("Start:", start);
-    console.log("End:", end);
+    routeLine = new google.maps.Polyline({
 
-    directionsService.route(
-        {
-            origin: start,
-            destination: end,
-            travelMode: google.maps.TravelMode.DRIVING
-        },
-        (result, status) => {
+        path: [start, end],
 
-            console.log("Directions Status:", status);
-            console.log(result);
+        geodesic: true,
 
-            if (status === "OK") {
+        strokeColor: "#1E88E5",
 
-                directionsRenderer.setDirections(result);
+        strokeOpacity: 1,
 
-                const leg = result.routes[0].legs[0];
+        strokeWeight: 5
 
-                document.getElementById("distance").innerHTML =
-                    "Distance : " + leg.distance.text;
+    });
 
-                document.getElementById("eta").innerHTML =
-                    "ETA : " + leg.duration.text;
+    routeLine.setMap(map);
 
-            } else {
+}
 
-                alert("Directions Error : " + status);
+function updateTravelledPath() {
 
-            }
+    if (!travelledLine) {
 
-        }
-    );
+        travelledLine = new google.maps.Polyline({
+
+            path: travelledPath,
+
+            geodesic: true,
+
+            strokeColor: "#00C853",
+
+            strokeOpacity: 1,
+
+            strokeWeight: 6
+
+        });
+
+        travelledLine.setMap(map);
+
+    } else {
+
+        travelledLine.setPath(travelledPath);
+
+    }
+
+}
+
+function updateDistance(start, end, current) {
+
+    const total =
+        google.maps.geometry.spherical.computeDistanceBetween(
+            new google.maps.LatLng(start.lat, start.lng),
+            new google.maps.LatLng(end.lat, end.lng)
+        );
+
+    const remaining =
+        google.maps.geometry.spherical.computeDistanceBetween(
+            new google.maps.LatLng(current.lat, current.lng),
+            new google.maps.LatLng(end.lat, end.lng)
+        );
+
+    const travelled = total - remaining;
+
+    document.getElementById("distance").innerHTML =
+        "Remaining : " + (remaining / 1000).toFixed(2) + " km";
+
+    document.getElementById("eta").innerHTML =
+        "Travelled : " + Math.max(0, travelled / 1000).toFixed(2) + " km";
 
 }
 
