@@ -1,43 +1,34 @@
 const params = new URLSearchParams(window.location.search);
-
 const journeyId = params.get("id");
 
 let map;
 
+let startMarker;
+let endMarker;
 let currentMarker;
 
-let startMarker;
-
-let endMarker;
-
 let directionsService;
-
 let directionsRenderer;
+
+let routeDrawn = false;
 
 function initMap() {
 
     map = new google.maps.Map(document.getElementById("map"), {
-
         zoom: 15,
-
-        center: {
-            lat: 20,
-            lng: 78
-        }
-
+        center: { lat: 20, lng: 78 }
     });
 
-    directionsService =
-        new google.maps.DirectionsService();
+    directionsService = new google.maps.DirectionsService();
 
-    directionsRenderer =
-        new google.maps.DirectionsRenderer({
-
-            suppressMarkers: true,
-
-            preserveViewport: true
-
-        });
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        preserveViewport: true,
+        polylineOptions: {
+            strokeColor: "#4285F4",
+            strokeWeight: 6
+        }
+    });
 
     directionsRenderer.setMap(map);
 
@@ -50,84 +41,76 @@ function initMap() {
             const data = doc.data();
 
             const start = {
-
                 lat: data.startLat,
-
                 lng: data.startLng
-
             };
 
             const end = {
-
                 lat: data.endLat,
-
                 lng: data.endLng
-
             };
 
             const current = {
-
                 lat: data.currentLat,
-
                 lng: data.currentLng
-
             };
 
-            if (!startMarker) {
+            createMarkers(start, end, current);
 
-                startMarker = new google.maps.Marker({
+            // Draw route only once
+            if (!routeDrawn) {
 
-                    position: start,
+                drawRoute(start, end);
 
-                    map: map,
+                fitBounds(start, end);
 
-                    label: "S"
-
-                });
-
+                routeDrawn = true;
             }
 
-            if (!endMarker) {
-
-                endMarker = new google.maps.Marker({
-
-                    position: end,
-
-                    map: map,
-
-                    label: "E"
-
-                });
-
-            }
-
-            if (!currentMarker) {
-
-                currentMarker = new google.maps.Marker({
-
-                    position: current,
-
-                    map: map,
-
-                    title: "Current Location",
-
-                    icon: {
-
-                        url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-
-                    }
-
-                });
-
-            }
-
+            // Move only the current marker
             currentMarker.setPosition(current);
 
-            drawRoute(start, end);
-
-            fitBounds(start, end, current);
+            // Optional: keep map centered on current location
+            map.panTo(current);
 
         });
+
+}
+
+function createMarkers(start, end, current) {
+
+    if (!startMarker) {
+
+        startMarker = new google.maps.Marker({
+            position: start,
+            map: map,
+            label: "S"
+        });
+
+    }
+
+    if (!endMarker) {
+
+        endMarker = new google.maps.Marker({
+            position: end,
+            map: map,
+            label: "E"
+        });
+
+    }
+
+    if (!currentMarker) {
+
+        currentMarker = new google.maps.Marker({
+            position: current,
+            map: map,
+            title: "Current Location",
+            icon: {
+                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+            }
+        });
+
+    }
 
 }
 
@@ -141,7 +124,7 @@ function drawRoute(start, end) {
 
         travelMode: google.maps.TravelMode.DRIVING
 
-    }, function(result, status) {
+    }, (result, status) => {
 
         if (status === "OK") {
 
@@ -161,15 +144,13 @@ function drawRoute(start, end) {
 
 }
 
-function fitBounds(start, end, current) {
+function fitBounds(start, end) {
 
     const bounds = new google.maps.LatLngBounds();
 
     bounds.extend(start);
 
     bounds.extend(end);
-
-    bounds.extend(current);
 
     map.fitBounds(bounds);
 
