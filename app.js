@@ -57,7 +57,13 @@ function initMap() {
             currentMarker.setPosition(current);
 
             // Add current location to travelled path
-            travelledPath.push(current);
+           if (
+    travelledPath.length === 0 ||
+    travelledPath[travelledPath.length - 1].lat !== current.lat ||
+    travelledPath[travelledPath.length - 1].lng !== current.lng
+) {
+    travelledPath.push(current);
+}
 
             // Draw/update travelled path
             updateTravelledPath();
